@@ -28,9 +28,17 @@ export default function ParticleLogo() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    let logicalWidth = 0;
+    let logicalHeight = 0;
+
     const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      logicalWidth = canvas.offsetWidth;
+      logicalHeight = canvas.offsetHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = logicalWidth * dpr;
+      canvas.height = logicalHeight * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset before scale
+      ctx.scale(dpr, dpr);
     };
 
     resizeCanvas();
@@ -44,9 +52,9 @@ export default function ParticleLogo() {
       const tempCtx = tempCanvas.getContext('2d');
       if (!tempCtx) return;
 
-      const scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.6;
-      const scaledWidth = img.width * scale;
-      const scaledHeight = img.height * scale;
+      const scale = Math.min(logicalWidth / img.width, logicalHeight / img.height) * 0.6;
+      const scaledWidth = Math.floor(img.width * scale);
+      const scaledHeight = Math.floor(img.height * scale);
 
       tempCanvas.width = scaledWidth;
       tempCanvas.height = scaledHeight;
@@ -68,10 +76,10 @@ export default function ParticleLogo() {
             const distance = 1000 + Math.random() * 500;
 
             particles.current.push({
-              x: canvas.width / 2 + Math.cos(angle) * distance,
-              y: canvas.height / 2 + Math.sin(angle) * distance,
-              targetX: x + (canvas.width - scaledWidth) / 2,
-              targetY: y + (canvas.height - scaledHeight) / 2,
+              x: logicalWidth / 2 + Math.cos(angle) * distance,
+              y: logicalHeight / 2 + Math.sin(angle) * distance,
+              targetX: x + (logicalWidth - scaledWidth) / 2,
+              targetY: y + (logicalHeight - scaledHeight) / 2,
               vx: 0,
               vy: 0,
               size: 1 + Math.random() * 1.5,
@@ -100,7 +108,7 @@ export default function ParticleLogo() {
     const animate = () => {
       if (!ctx || !canvas) return;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
       const elapsed = Date.now() - startTime.current;
       const animationDuration = 1800;
@@ -139,9 +147,8 @@ export default function ParticleLogo() {
           particle.y += particle.vy;
         }
 
-        const hue = 240;
-        const brightness = 50 + Math.random() * 20;
-        ctx.fillStyle = `hsla(${hue}, 100%, ${brightness}%, ${particle.opacity})`;
+        // Solid clean color for all particles
+        ctx.fillStyle = `hsla(240, 100%, 50%, ${particle.opacity})`;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
